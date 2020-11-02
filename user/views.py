@@ -3,7 +3,7 @@ from .models import Profile
 from .models import ContactForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Profile,Events,EventMembers
+from .models import Profile,Events,EventMembers,Invites
 from controller.models import Applicants
 from django.contrib.auth.models import User
 from django import forms
@@ -138,11 +138,14 @@ def myCreatedEvents(request):
     try:
         profile = Profile.objects.get(student_id=request.user.id)
         events = Events.objects.filter(hoster_id = profile.id)
-        context = {'events': events,'item' : profile}
+        
+        context = {'events': events,'item' : profile }
         
     except:
         events = []
-        context = {'events': events,'item' : profile}
+        students = []
+        print(students)
+        context = {'events': events,'item' : profile }
         
 
     return render(request,'user/ViewEvents.html',context)
@@ -154,7 +157,9 @@ def myCreatedEvents(request):
 def eventDetails(request,id):
     profile = Profile.objects.get(student_id=request.user.id)
     event = Events.objects.get(pk=id)
-    context = {'event': event,'item' : profile}
+    students=Profile.objects.filter(college_name = profile.college_name)
+    print(students)
+    context = {'event': event,'item' : profile,'students':students}
     return render(request,'user/EventDetails.html',context)
 
 #to delete a event only hoster has the right to delete ;else noone can
@@ -273,3 +278,48 @@ def paypage(request):
 def paycheck(request):
     context={}
     return render(request, 'user/paycheck.html', context)
+
+def sendInvite(request,id):
+    if request.method == 'POST':
+        receiver = request.POST['invitation']
+        profile=Profile.objects.get(pk=receiver)
+        print(profile)
+        try:
+            invite = Invites.objects.get(eventID_id=id,receiver_id=receiver)
+            messages.warning(request,'already sent')
+            return redirect('eventDetails',id=id) 
+        except:
+            Invites.objects.create(
+                receiver_id=receiver,
+                eventID_id=id,
+                
+            ).save()
+            messages.success(request,'Invitation Sent to the User')
+            return redirect('eventDetails',id=id) 
+    profile = Profile.objects.get(student_id=request.user.id)
+    event = Events.objects.get(pk=id)
+    students=Profile.objects.filter(college_name = profile.college_name)
+    print(students)
+    context = {'event': event,'item' : profile,'students':students}
+    return render(request,'user/EventDetails.html',context)
+
+def viewInvites(request):
+    try:
+        profile = Profile.objects.get(student_id=request.user.id)
+        invites = Invites.objects.filter(receiver_id = profile.id)
+        context = {'invites': invites,'item' : profile }
+        
+    except:
+        invites = []
+        context = {'invites': invites,'item' : profile }
+        
+
+    return render(request,'user/ViewInvites.html',context)
+#to delete a event only hoster has the right to delete ;else noone can
+def deleteInvite(request,id):
+    profile = Profile.objects.get(student_id=request.user.id)
+    invite=Invites.objects.get(eventID_id=id,receiver_id=profile.id)
+    
+    invite.delete()
+    messages.warning(request,'Invite has been deleted')
+    return redirect('viewInvites') 

@@ -37,7 +37,10 @@ class EventMembers(models.Model):
     def __str__(self):
         return str(self.member)
 
-
+class Invites(models.Model):
+    receiver = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    eventID = models.ForeignKey(Events, on_delete=models.CASCADE)
+    dateSent = models.DateTimeField(auto_now_add=True)
 
 class ContactForm(forms.Form):
     name = forms.CharField(max_length=100, label='Your Name', widget=forms.TextInput(attrs={ 'class': 'form-control' }))
@@ -45,3 +48,6 @@ class ContactForm(forms.Form):
     subject = forms.CharField(max_length=100, widget=forms.TextInput(attrs={ 'class': 'form-control' }))
     message = forms.CharField(required=False, widget=forms.Textarea(attrs={ 'class': 'form-control' }))
           
+
+
+
